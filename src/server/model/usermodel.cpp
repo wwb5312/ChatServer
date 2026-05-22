@@ -1,5 +1,4 @@
 #include "usermodel.hpp"
-// #include"user.hpp"
 
 #include <iostream>
 
@@ -8,30 +7,30 @@ using namespace std;
 
 // user表的增加方法
 bool UserModel::insert(User &user) {
-  // 1.组装sql语句
-  char sql[1024] = {0};
-  sprintf(sql,
-          "insert into user(name, password, state) values('%s', '%s', '%s')",
-          user.getName().c_str(), user.getPassword().c_str(),
-          user.getState().c_str());
-
   MySQL mysql;
-  if (mysql.connect()) {
-    if (mysql.update(sql)) {
-      // 获取插入成功的用户数据生成的主键id
-      cout << "插入成功" << endl;
-      user.setId(mysql_insert_id(mysql.getConnection()));
-      return true;
-    }
-  }
+  if (!mysql.connect()) return false;
 
+  // 字符串经 escape 后再拼 SQL,整型直接走格式化
+  string name = mysql.escape(user.getName());
+  string password = mysql.escape(user.getPassword());
+  string state = mysql.escape(user.getState());
+
+  char sql[4096] = {0};
+  snprintf(sql, sizeof(sql),
+           "insert into user(name, password, state) values('%s', '%s', '%s')",
+           name.c_str(), password.c_str(), state.c_str());
+
+  if (mysql.update(sql)) {
+    user.setId(mysql_insert_id(mysql.getConnection()));
+    return true;
+  }
   return false;
 }
 
 User UserModel::query(int id) {
   // 1.组装sql语句
   char sql[1024] = {0};
-  sprintf(sql, "select * from user where id = %d", id);
+  snprintf(sql, sizeof(sql), "select * from user where id = %d", id);
 
   MySQL mysql;
   if (mysql.connect()) {
@@ -48,33 +47,29 @@ User UserModel::query(int id) {
         mysql_free_result(res);
         return user;
       }
+      mysql_free_result(res);
     }
   }
   return User();
 }
 // 更新用户状态信息
 bool UserModel::updateState(User user) {
-  // 1.组装sql语句
-  char sql[1024] = {0};
-  sprintf(sql, "update user set state = '%s' where id = %d",
-          user.getState().c_str(), user.getId());
-
   MySQL mysql;
-  if (mysql.connect()) {
-    if (mysql.update(sql)) {
-      cout << "update state success!!!!" << endl;
-      return true;
-    }
-  }
+  if (!mysql.connect()) return false;
 
-  cout << "update state false!!!" << endl;
-  return false;
+  string state = mysql.escape(user.getState());
+
+  char sql[1024] = {0};
+  snprintf(sql, sizeof(sql), "update user set state = '%s' where id = %d",
+           state.c_str(), user.getId());
+
+  return mysql.update(sql);
 }
 
 // 重置用户状态信息
 void UserModel::resetState() {
   // 1.组装sql语句
-  char sql[1024] = "update user set state = 'offline'";
+  const char *sql = "update user set state = 'offline'";
 
   MySQL mysql;
   if (mysql.connect()) {

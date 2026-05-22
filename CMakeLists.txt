@@ -14,6 +14,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include/server)
 include_directories(${PROJECT_SOURCE_DIR}/include/server/db)
 include_directories(${PROJECT_SOURCE_DIR}/include/server/model)
 include_directories(${PROJECT_SOURCE_DIR}/include/server/redis)
+include_directories(${PROJECT_SOURCE_DIR}/include/server/util)
 include_directories(${PROJECT_SOURCE_DIR}/thirdparty)
 
 

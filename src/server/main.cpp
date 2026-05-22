@@ -16,6 +16,7 @@ int main(int argc, char **argv) {
   if (argc < 3) {
     cerr << "command invalid! example: ./ChatServer 192.168.11.128 6000"
          << endl;
+    return 1;
   }
   // 解析命令行传递的参数
   char *ip = argv[1];

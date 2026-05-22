@@ -1,32 +1,34 @@
 #include "groupmodel.hpp"
 
 bool GroupModel::createGroup(Group &group) {
-  // 1.组装sql语句
-  char sql[1024] = {0};
-  sprintf(sql, "insert into allgroup(groupname, groupdesc) values('%s', '%s')",
-          group.getName().c_str(), group.getDesc().c_str());
-
   MySQL mysql;
-  if (mysql.connect()) {
-    if (mysql.update(sql)) {
-      group.setId(mysql_insert_id(mysql.getConnection()));
-      return true;
-    }
-  }
+  if (!mysql.connect()) return false;
 
+  string name = mysql.escape(group.getName());
+  string desc = mysql.escape(group.getDesc());
+
+  char sql[4096] = {0};
+  snprintf(sql, sizeof(sql),
+           "insert into allgroup(groupname, groupdesc) values('%s', '%s')",
+           name.c_str(), desc.c_str());
+
+  if (mysql.update(sql)) {
+    group.setId(mysql_insert_id(mysql.getConnection()));
+    return true;
+  }
   return false;
 }
 // 加入群组
 void GroupModel::addGroup(int userid, int groupid, string role) {
-  // 1.组装sql语句
-  char sql[1024] = {0};
-  sprintf(sql, "insert into groupuser values(%d, %d, '%s')", groupid, userid,
-          role.c_str());
-
   MySQL mysql;
-  if (mysql.connect()) {
-    mysql.update(sql);
-  }
+  if (!mysql.connect()) return;
+
+  string safe_role = mysql.escape(role);
+  char sql[1024] = {0};
+  snprintf(sql, sizeof(sql), "insert into groupuser values(%d, %d, '%s')",
+           groupid, userid, safe_role.c_str());
+
+  mysql.update(sql);
 }
 
 // 查询用户的群组信息

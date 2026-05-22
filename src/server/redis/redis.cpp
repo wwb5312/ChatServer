@@ -1,7 +1,15 @@
 #include "redis.hpp"
 
+#include <cstdlib>
 #include <iostream>
 using namespace std;
+
+namespace {
+string envOrRedis(const char *key, const char *def) {
+  const char *v = std::getenv(key);
+  return (v != nullptr && *v != '\0') ? string(v) : string(def);
+}
+}  // namespace
 
 Redis::Redis() : _publish_context(nullptr), _subcribe_context(nullptr) {}
 
@@ -16,15 +24,18 @@ Redis::~Redis() {
 }
 
 bool Redis::connect() {
+  string host = envOrRedis("CHAT_REDIS_HOST", "127.0.0.1");
+  int port = std::atoi(envOrRedis("CHAT_REDIS_PORT", "6379").c_str());
+
   // 负责publish发布消息的上下文连接
-  _publish_context = redisConnect("127.0.0.1", 6379);
+  _publish_context = redisConnect(host.c_str(), port);
   if (nullptr == _publish_context) {
     cerr << "connect redis failed!" << endl;
     return false;
   }
 
   // 负责subscribe订阅消息的上下文连接
-  _subcribe_context = redisConnect("127.0.0.1", 6379);
+  _subcribe_context = redisConnect(host.c_str(), port);
   if (nullptr == _subcribe_context) {
     cerr << "connect redis failed!" << endl;
     return false;
